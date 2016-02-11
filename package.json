@@ -1,0 +1,32 @@
+{
+  "name": "mazejs",
+  "version": "0.1.0",
+  "description": "A JavaScript Maze Generator",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brandonheyer/mazejs.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/brandonheyer/mazejs/issues"
+  },
+  "homepage": "https://github.com/brandonheyer/mazejs#readme",
+  "devDependencies": {
+    "babel-preset-es2015": "^6.5.0",
+    "babelify": "^7.2.0",
+    "browserify": "^13.0.0",
+    "grunt": "^0.4.5",
+    "grunt-browserify": "^4.0.1",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-watch": "^0.6.1"
+  },
+  "dependencies": {
+    "jquery": "^2.2.0",
+    "underscore": "^1.8.3"
+  }
+}

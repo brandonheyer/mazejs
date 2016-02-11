@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<title>Maze Generator - HTML5 / Javasript Maze Generating Algorithm Fun</title>
+
+		<link rel="stylesheet" href="../css/normalize.css" />
+		<link rel="stylesheet" href="../css/foundation.css" />
+
+		<style>
+			body {
+				overflow: hidden;
+			}
+
+			.row-header .columns {
+				font-size: 20px;
+			}
+
+			.row-header h1 {
+				font-size: 1em;
+			}
+
+			.row-header h2, .row.ad h2 {
+				font-size: 0.8em;
+			}
+
+			.row-options .columns .row .columns label {
+				font-size: 10px;
+			}
+
+			.row-options .columns {
+				 font-size: 14px;
+				 -webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+
+			#maze-io {
+				line-height: 7px;
+			}
+
+			#maze-io input {
+				margin-bottom: 0;
+			}
+
+			h1 {
+				margin-bottom: 0em;
+			}
+
+			#maze-container {
+				position: relative;
+				width: 100%;
+				overflow: auto;
+			}
+
+			.maze {
+				margin: 0 auto;
+			}
+
+			.cell {
+				border: 1px solid rgba( 0, 0, 0, 0.25 );
+				float: left;
+				box-sizing: border-box;
+			}
+
+			.visited {
+				background-color: rgba( 225, 217, 186, 0.5);
+			}
+
+			.complete {
+				background-color: rgba( 225, 179, 23, 0.5 );
+				border-color: #000000;
+			}
+
+			.start {
+				background-color: #5da423;
+			}
+
+			.finish {
+				background-color: #c60f13;
+			}
+
+			.for-print {
+				visibility: hidden;
+				display: none;
+			}
+
+			.print-mode {
+				overflow: auto;
+			}
+
+			.print-mode .for-print {
+				visibility: visible;
+				display: inline;
+			}
+
+			.print-mode .for-screen {
+				visibility: hidden;
+				display: none;
+			}
+
+			.print-mode .complete {
+				background-color: #ffffff;
+			}
+
+			.print-mode .start, .print-mode .finish {
+				background-color: #cccccc;
+			}
+
+			.print-mode .mc-row {
+				width: 100%;
+				max-width: 100%;
+			}
+
+			.print-mode .mc-row .columns {
+				padding: 0;
+			}
+
+			.print-mode #maze-container {
+				height: auto;
+			}
+
+			.s {
+				border-bottom-color: rgba( 0,0,0,0 );
+			}
+
+			.n {
+				border-top-color: rgba( 0,0,0,0 );
+			}
+
+			.e {
+				border-right-color: rgba( 0,0,0,0 );
+			}
+
+			.w {
+				border-left-color: rgba( 0,0,0,0 );
+			}
+
+			.distance-0 {
+				background-color: rgba( 255, 0, 0, 0.0 );
+			}
+
+			.distance-1 {
+				background-color: rgba( 255, 0, 0, 0.1 );
+			}
+
+			.distance-2 {
+				background-color: rgba( 255, 0, 0, 0.2 );
+			}
+
+			.distance-3 {
+				background-color: rgba( 255, 0, 0, 0.3 );
+			}
+
+			.distance-4 {
+				background-color: rgba( 255, 0, 0, 0.4 );
+			}
+
+			.distance-5 {
+				background-color: rgba( 255, 0, 0, 0.5 );
+			}
+
+			.distance-6 {
+				background-color: rgba( 255, 0, 0, 0.6 );
+			}
+
+			.distance-7 {
+				background-color: rgba( 255, 0, 0, 0.7 );
+			}
+
+			.distance-8 {
+				background-color: rgba( 255, 0, 0, 0.8 );
+			}
+
+			.distance-9 {
+				background-color: rgba( 255, 0, 0, 0.9 );
+			}
+
+			.distance-10 {
+				background-color: rgba( 255, 0, 0, 1 );
+			}
+
+			#updates {
+				position: fixed;
+				top: 20px;
+				right: -530px;
+				width: 600px;
+				padding: 0.5em;
+				max-height: 500px;
+			}
+
+			#updates .large-9 {
+				max-height: 480px;
+				overflow: auto;
+			}
+
+			#updates h1 {
+				cursor: pointer;
+			}
+
+			.ad {
+				margin-top: 20px;
+			}
+
+			.ad > div > div {
+				margin: 0 auto;
+				width: 468px;
+			}
+		</style>
+
+		<script src="lib.js" type="text/javascript"></script>
+		<script src="maze.js" type="text/javascript"></script>
+		<script src="demo.js" type="text/javascript"></script>
+	</head>
+	<body>
+		<div class="row row-header">
+			<div class="12-large columns">
+				<h1>Maze Generator</h1>
+				<h2>An HTML5 / JavaScript maze generation engine and algorithm</h2>
+			</div>
+		</div>
+		<div class="row row-options for-screen">
+			<div class="large-12 columns">
+				<div class="row">
+					<div id="maze-draw" class="large-12 columns maze-input">
+						<ul class="large-block-grid-4">
+							<li>
+								<label for="grid-width">Maze Width (in cells)</label>
+								<input type="text" id="grid-width" value="40" />
+							</li>
+							<li>
+								<label for="grid-height">Maze Height (in cells)</label>
+								<input type="text" id="grid-height" value="20" />
+							</li>
+							<li>
+								<label for="cell-size">Cell Size (in px)</label>
+								<input type="text" id="cell-size" value="20" />
+							</li>
+							<li>
+								<label for="maze-style">
+									Style Modifier (0: Winding to 100: Dead Ends)
+								</label>
+								<input type="text" id="maze-style" value="50" />
+							</li>
+						</ul>
+					</div>
+					<div id="maze-io" class="large-12 columns maze-input">
+						<input type="text" id="maze-savestring" /><br />
+						<a class="button tiny secondary" id="save-maze">Get Maze String</a>
+						<a class="button tiny secondary" id="load-maze">Load Maze String</a>
+					</div>
+				</div>
+				<div class="row row-buttons">
+					<div class="large-12 columns">
+						<div class="left">
+							<a class="button tiny secondary" id="io-button">Import / Export Maze</a>
+							<a class="button tiny secondary" id="toggle-heatmap">Toggle Heat Map View</a>
+							&nbsp; Zoom: <a class="button tiny secondary" id="zoom-out">-</a>
+							<a class="button tiny secondary" id="zoom-in">+</a>
+							<a class="button tiny secondary" id="enter-printmode">Enter Printer-Friend Mode</a>
+						</div>
+
+						<a class="button round tiny right" id="generate">Generate!</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row mc-row">
+			<div class="large-12 columns">
+				<div id="maze-container">
+					<div class="maze">
+
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="row ad">
+			<div class="large-12 columns">
+				<div class="center">
+					<h2 class="for-print">http://www.before-reality.net/maze<br /><a class="button tiny secondary" id="exit-printmode">Exit Printer-Friend Mode</a></h2>
+				</div>
+			</div>
+		</div>
+
+		<div class="panel for-screen" id="updates">
+			<div class="row">
+				<div class="large-3 columns" id="qmark">
+					<h1>?</h1>
+				</div>
+				<div class="large-9 columns">
+					<h3>About</h3>
+					<p>
+						This maze generator and the accompanying algorithm was inspired by a slide show by Jamis Buck
+						called "<a href="http://www.jamisbuck.org/presentations/rubyconf2011/index.html">Algorithm is Not a Four Letter Word</a>." It is a great read that goes over
+						what mazes are, various ways of generating mazes and the importance of working with algorithms. You can learn more about what I learned while making this
+						generator and algorithm over at this blog post: <a href="http://www.brandonheyer.com/2013/04/24/maze-generating-algorithms-fun-with-html-and-javascript">Maze Generating Algorithms: Fun with HTML and JavaScript</a>
+					</p>
+					<p>
+						To use the generator simply click 'generate' and a default maze will start popping up. You can set the width and height of the maze (within bounds based off of the cell size you select).
+						If you make some changes, clicking 'generate' will clear the existing maze and start up another. If you'd like to play with the complexity of the maze, use the style modifier.
+						Low numbers will result in long passages, high numbers will result in a lot of dead-ends. If you use a mid-range number you'll get a little of both. Once the maze is done generating,
+						the start will be marked green and the furthest spaces from the start will be marked red.
+					</p>
+					<p>
+						Have fun and enjoy! If you have any questions or suggestions, be sure to check out <a href="http://www.brandonheyer.com/2013/04/24/maze-generating-algorithms-fun-with-html-and-javascript">the blog post</a> and leave a comment! I'll post updates below as they roll in.
+					</p>
+
+					<h3>Updates</h3>
+
+					<h4>Sunday, May 12, 2013</h4>
+					<p>Removed size limits and added scrolling if maze gets too large. Added zooming and save/load functionality. Copy and paste the generated string to share created mazes! Added 'printer-friendly' mode.</p>
+
+					<h4>Wednesday, April 24, 2013</h4>
+					<p>Added "heat map" view which is a great way to visualize the distance from start of individual cells. It also helps illustrate the differences introduced with the style modifier.</p>
+
+					<h4>Tuesday, April 23, 2013</h4>
+					<p>Launched! Use the input fields to tweak how the maze is generated. More cool features to come as time progresses!</p>
+
+
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
