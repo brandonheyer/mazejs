@@ -2,7 +2,7 @@ import $ from 'jquery';
 import _ from 'underscore';
 import Maze from './maze';
 
-var $current, $new, neighbors, direction, n;
+var $current, $new, neighbors, direction, n, $maze, maze;
 
 var saveMappings = {
     'n': '0',
@@ -113,25 +113,23 @@ var loadDraw = function( saveString, startID, finishIDs ) {
 
 var clearGrid = function() {
     $maze.empty().removeClass( 'finished' );
-    cells = [];
+    maze.cells = [];
 };
 
 $( document ).ready( function() {
-    var $maze, maze;
     $maze = $( '.maze' );
-
     maze = new Maze( $maze );
 
     $( '.maze-input' ).hide().first().show();
 
     $( '#generate' ).click( function( event ) {
         event.preventDefault();
-        //clearGrid();
+        clearGrid();
 
-        /*height = parseInt( $( '#grid-height' ).val(), 10 );
-        width = parseInt( $( '#grid-width' ).val(), 10 );
-        cellSize = parseInt( $( '#cell-size' ).val(), 10 );
-        split = parseInt( $( '#maze-style' ).val(), 10 );*/
+        maze.height = parseInt( $( '#grid-height' ).val(), 10 );
+        maze.width = parseInt( $( '#grid-width' ).val(), 10 );
+        maze.cellSize = parseInt( $( '#cell-size' ).val(), 10 );
+        maze.split = parseInt( $( '#maze-style' ).val(), 10 );
 
         maze.drawGrid();
     } );

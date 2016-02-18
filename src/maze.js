@@ -11,13 +11,12 @@ export default class {
         this.height = 20;
         this.width = 50;
 
-        this.renderSteps = 2;
         this.currTime = new Date();
         this.drawTime = 0;
         this.split = 0;
 
-        this.activeSet = [];
-        this.cells = [];
+        this._activeSet = [];
+
         this.heats = [];
 
         this.passageToClass = {
@@ -35,166 +34,185 @@ export default class {
         };
     }
 
-    drawGrid( h, w, onFinish ) {
-        var i, j, callCnt = 0;
+    _populateCells () {
+        this._cells = [];
 
-        var h = this.height;
-        var w = this.width;
+        for ( let i = 0; i < this.height; i++ ) {
+            this._cells.push( [] );
 
-        for( i = 0; i < h; i++ ) {
-            _.defer( _.bind( function() {
-                this.cells[ callCnt ] = [];
-
-                for( j = 0; j < w; j++ ) {
-                    this.cells[ callCnt ].push(
-                        $( '<div id="' + j + '-' + callCnt + '" class="cell" style="width:' + this.cellSize + 'px;height:' + this.cellSize +'px" />' )
-                            .appendTo( this.$maze )
-                    );
-                }
-
-                if ( callCnt + 1 === h ) {
-                    if ( !onFinish ) {
-                        this.continueDrawing();
-                    } else {
-                        onFinish();
-                    }
-                }
-
-                callCnt++;
-            }, this ) );
+            for ( let j = 0; j < this.width; j++ ) {
+                this._cells[ i ].push( {
+                    x: j,
+                    y: i,
+                    exits: [],
+                    distance: -1,
+                    visited: false,
+                    complete: false
+                } );
+            }
         }
-
-        this.$maze
-            .width( w * this.cellSize )
-            .height( h * this.cellSize )
-            .attr( 'data-width', w )
-            .attr( 'data-height', h );
     }
 
-    continueDrawing () {
-        this.distance = this.maxDistance = 0;
-        this.activeSet.push(
-            $( '#' + Math.floor( Math.random() * this.width ) + '-' +  Math.floor( Math.random() * this.height ) )
-                .addClass( 'visited start' )
-                .attr( 'data-distance', this.distance ) );
+    drawGrid() {
+        var current;
+
+        this.$maze
+            .width( this.width * this.cellSize )
+            .height( this.height * this.cellSize )
+            .attr( 'data-width', this.width )
+            .attr( 'data-height', this.height );
+
+        this._populateCells();
+
+        this.maxDistance = 0;
+
+        current = this._cells[ this._getStartYPos() ][ this._getStartXPos() ];
+        current.distance = 0;
+        current.visited = true;
+
+        this._activeSet.push( current );
 
         this.draw();
     }
 
-    draw () {
-        var $current, $new, neighbors, tempTime, n = Math.floor( Math.random() * 100 );
+    _getStartXPos () {
+        return Math.floor( Math.random() * this.width );
+    }
 
+    _getStartYPos () {
+        return Math.floor( Math.random() * this.height );
+    }
+
+    /**
+     * Get node to act as head node for generation, will either select a node at
+     * random, or the last added node
+     */
+    _getHeadNode () {
+        // Get a random number between 0 - 99
+        var n = Math.floor( Math.random() * 100 );
+
+        // If the random number is less than the split modifier,
+        // select an existing node ( will cause a trend towards dead ends )
         if ( n < this.split ) {
-            n = Math.floor( Math.random() * this.activeSet.length );
-        } else {
-            n = this.activeSet.length - 1;
+            n = Math.floor( Math.random() * this._activeSet.length );
         }
 
-        $current = this.activeSet[ n ];
+        // Otherwise, select the last added node
+        // ( will cause a trend towards winding trails )
+        else {
+            n = this._activeSet.length - 1;
+        }
 
-        this.distance = parseInt( $current.attr( 'data-distance' ), 10 );
-        this.maxDistance = Math.max( this.maxDistance, this.distance );
+        return n;
+    }
 
-        neighbors = this.getUnvisitedNeighbors( $current );
+    generate () {
 
-        if( neighbors.length ) {
+    }
+
+    draw () {
+        var current, next, neighbors, n;
+
+        n = this._getHeadNode();
+
+        current = this._activeSet[ n ];
+
+        this.maxDistance = Math.max( this.maxDistance, current.distance );
+
+        neighbors = this._getUnvisitedNeighbors( current );
+
+        if ( neighbors ) {
             n = Math.floor( Math.random() * neighbors.length );
-            $new = neighbors[ n ];
+            next = neighbors[ n ];
 
-            this.activeSet.push(
-                $new.cell.addClass( 'visited ' + this.inversePassage[ $new.direction ] )
-                    .attr( 'data-distance', this.distance + 1 )
-            );
+            next.cell.exits.push( this.inversePassage[ next.direction ] );
+            next.cell.distance = current.distance + 1;
+            next.cell.visited = true;
 
-            $current.addClass( this.passageToClass[ $new.direction ] );
+            this._activeSet.push( next.cell );
+
+            current.exits.push( this.passageToClass[ next.direction ] );
         } else {
-            this.activeSet.splice( n, 1 );
+            this._activeSet.splice( n, 1 );
         }
 
-        tempTime = ( new Date() ).getTime();
-
-        this.renderSteps++;
-
-        if ( this.activeSet.length ) {
-            if ( this.renderSteps % 1 === 0 ) {
-                _.defer( _.bind( this.draw, this ) );
-            } else {
+        if ( this._activeSet.length ) {
+            try {
                 this.draw();
+            } catch ( e ) {
+                let context = this;
+                _.defer( function() {
+                    context.draw();
+                } );
             }
         } else {
-            $( 'div[data-distance=' + this.maxDistance + ']' ).addClass( 'finish' );
-
             this.finalizeMaze();
-            this.addDepthClasses();
         }
+
+        // else {
+            //this.finalizeMaze();
+            //this.addDepthClasses();
+        //}
     }
 
     finalizeMaze () {
-        this.$maze.find( 'div.n' ).css( 'border-top', '0' );
-        this.$maze.find( 'div.s' ).css( 'border-bottom', '0' );
-        this.$maze.find( 'div.w' ).css( 'border-left', '0' );
-        this.$maze.find( 'div.e' ).css( 'border-right', '0' );
+        var output = '';
 
-        this.$maze.addClass( 'finished' );
+        for ( let i = 0; i < this.height; i++ ) {
+            for ( let j = 0; j < this.width; j++ ) {
+                output += '<div id="' + j + '-' + i + '" class="cell visited complete ' + this._cells[ i ][ j ].exits.join( ' ' ) +
+                    '" style="width: ' + this.cellSize + 'px; height: ' + this.cellSize + 'px;"></div>';
+            }
+        }
+
+        this.$maze.append( output ).addClass( 'finished' );
     }
 
+/*
     addDepthClasses() {
         var i, j, distance;
 
-        for ( i = 0; i < this.cells.length; i++ ) {
-            for( j = 0; j < this.cells[ i ].length; j++ ) {
-                this.cells[ i ][ j ]
+        for ( i = 0; i < this._cells.length; i++ ) {
+            for( j = 0; j < this._cells[ i ].length; j++ ) {
+                this._cells[ i ][ j ]
                     .attr( 'data-distance-class', 'distance-' +
                         Math.floor( ( parseInt( this.cells[ i ][ j ].attr( 'data-distance' ) ) / this.maxDistance * 10 ) )
                     );
             }
         }
+    }*/
+
+    _storeUnvisitedCell( current, result, direction ) {
+        if ( !current.visited ) {
+            result.push( { cell: current, direction: direction } );
+        }
     }
 
-    getUnvisitedNeighbors ( $cell ) {
-        var result = [], $current,
-            pos = $cell.attr( 'id' ).split( '-' ),
-            x = parseInt( pos[ 0 ], 10 ), y = parseInt( pos[ 1 ], 10 );
+    _getUnvisitedNeighbors ( cell ) {
+        var result = [];
 
         // North
-        if ( y !== 0 ) {
-            $current = this.cells[ y - 1 ][ x ];
-
-            if ( !$current.hasClass( 'visited' ) ) {
-                result.push( { cell: $current, direction: 0 } );
-            }
+        if ( cell.y !== 0 ) {
+            this._storeUnvisitedCell( this._cells[ cell.y - 1 ][ cell.x ], result, 0 );
         }
 
         // West
-        if ( x !== 0 ) {
-            $current = this.cells[ y ][ x - 1 ];
-
-            if ( !$current.hasClass( 'visited' ) ) {
-                result.push( { cell: $current, direction: 3 } );
-            }
+        if ( cell.x !== 0 ) {
+            this._storeUnvisitedCell( this._cells[ cell.y ][ cell.x - 1 ], result, 3 );
         }
 
         // South
-        if ( y !== this.height - 1 ) {
-            $current = this.cells[ y + 1 ][ x ];
-
-
-            if ( !$current.hasClass( 'visited' ) ) {
-                result.push( { cell: $current, direction: 1 } );
-            }
+        if ( cell.y !== this.height - 1 ) {
+            this._storeUnvisitedCell( this._cells[ cell.y + 1 ][ cell.x ], result, 1 );
         }
 
         // East
-        if ( x !== this.width - 1 ) {
-            $current = this.cells[ y ][ x + 1 ];
-
-            if ( !$current.hasClass( 'visited' ) ) {
-                result.push( { cell: $current, direction: 2 } );
-            }
+        if ( cell.x !== this.width - 1 ) {
+            this._storeUnvisitedCell( this._cells[ cell.y ][ cell.x + 1 ], result, 2 );
         }
 
         if ( result.length === 0 ) {
-            $cell.addClass( 'complete' );
+            cell.complete = true;
             return false;
         }
 
