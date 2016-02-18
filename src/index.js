@@ -131,7 +131,7 @@ $( document ).ready( function() {
         maze.cellSize = parseInt( $( '#cell-size' ).val(), 10 );
         maze.split = parseInt( $( '#maze-style' ).val(), 10 );
 
-        maze.drawGrid();
+        maze.generate();
     } );
 
     $( '#grid-width' ).change( function() {

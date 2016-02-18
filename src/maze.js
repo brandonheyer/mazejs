@@ -53,28 +53,6 @@ export default class {
         }
     }
 
-    drawGrid() {
-        var current;
-
-        this.$maze
-            .width( this.width * this.cellSize )
-            .height( this.height * this.cellSize )
-            .attr( 'data-width', this.width )
-            .attr( 'data-height', this.height );
-
-        this._populateCells();
-
-        this.maxDistance = 0;
-
-        current = this._cells[ this._getStartYPos() ][ this._getStartXPos() ];
-        current.distance = 0;
-        current.visited = true;
-
-        this._activeSet.push( current );
-
-        this.draw();
-    }
-
     _getStartXPos () {
         return Math.floor( Math.random() * this.width );
     }
@@ -105,82 +83,6 @@ export default class {
 
         return n;
     }
-
-    generate () {
-
-    }
-
-    draw () {
-        var current, next, neighbors, n;
-
-        n = this._getHeadNode();
-
-        current = this._activeSet[ n ];
-
-        this.maxDistance = Math.max( this.maxDistance, current.distance );
-
-        neighbors = this._getUnvisitedNeighbors( current );
-
-        if ( neighbors ) {
-            n = Math.floor( Math.random() * neighbors.length );
-            next = neighbors[ n ];
-
-            next.cell.exits.push( this.inversePassage[ next.direction ] );
-            next.cell.distance = current.distance + 1;
-            next.cell.visited = true;
-
-            this._activeSet.push( next.cell );
-
-            current.exits.push( this.passageToClass[ next.direction ] );
-        } else {
-            this._activeSet.splice( n, 1 );
-        }
-
-        if ( this._activeSet.length ) {
-            try {
-                this.draw();
-            } catch ( e ) {
-                let context = this;
-                _.defer( function() {
-                    context.draw();
-                } );
-            }
-        } else {
-            this.finalizeMaze();
-        }
-
-        // else {
-            //this.finalizeMaze();
-            //this.addDepthClasses();
-        //}
-    }
-
-    finalizeMaze () {
-        var output = '';
-
-        for ( let i = 0; i < this.height; i++ ) {
-            for ( let j = 0; j < this.width; j++ ) {
-                output += '<div id="' + j + '-' + i + '" class="cell visited complete ' + this._cells[ i ][ j ].exits.join( ' ' ) +
-                    '" style="width: ' + this.cellSize + 'px; height: ' + this.cellSize + 'px;"></div>';
-            }
-        }
-
-        this.$maze.append( output ).addClass( 'finished' );
-    }
-
-/*
-    addDepthClasses() {
-        var i, j, distance;
-
-        for ( i = 0; i < this._cells.length; i++ ) {
-            for( j = 0; j < this._cells[ i ].length; j++ ) {
-                this._cells[ i ][ j ]
-                    .attr( 'data-distance-class', 'distance-' +
-                        Math.floor( ( parseInt( this.cells[ i ][ j ].attr( 'data-distance' ) ) / this.maxDistance * 10 ) )
-                    );
-            }
-        }
-    }*/
 
     _storeUnvisitedCell( current, result, direction ) {
         if ( !current.visited ) {
@@ -217,5 +119,84 @@ export default class {
         }
 
         return result;
+    }
+
+    draw () {
+        var output = '';
+
+        for ( let i = 0; i < this.height; i++ ) {
+            for ( let j = 0; j < this.width; j++ ) {
+                output += '<div id="' + j + '-' + i + '" class="cell visited complete ' + this._cells[ i ][ j ].exits.join( ' ' ) +
+                    '" style="width: ' + this.cellSize + 'px; height: ' + this.cellSize + 'px;"></div>';
+            }
+        }
+
+        this.$maze.append( output ).addClass( 'finished' );
+    }
+
+    generate( callback ) {
+        var current;
+
+        this.$maze
+            .width( this.width * this.cellSize )
+            .height( this.height * this.cellSize )
+            .attr( 'data-width', this.width )
+            .attr( 'data-height', this.height );
+
+        this._populateCells();
+
+        this.maxDistance = 0;
+
+        current = this._cells[ this._getStartYPos() ][ this._getStartXPos() ];
+        current.distance = 0;
+        current.visited = true;
+
+        this._activeSet.push( current );
+
+        this._generate( _.bind( this.draw, this ) );
+    }
+
+    _generate ( callback ) {
+        var current, next, neighbors, n;
+
+        n = this._getHeadNode();
+
+        current = this._activeSet[ n ];
+
+        this.maxDistance = Math.max( this.maxDistance, current.distance );
+
+        neighbors = this._getUnvisitedNeighbors( current );
+
+        if ( neighbors ) {
+            n = Math.floor( Math.random() * neighbors.length );
+            next = neighbors[ n ];
+
+            next.cell.exits.push( this.inversePassage[ next.direction ] );
+            next.cell.distance = current.distance + 1;
+            next.cell.visited = true;
+
+            this._activeSet.push( next.cell );
+
+            current.exits.push( this.passageToClass[ next.direction ] );
+        } else {
+            this._activeSet.splice( n, 1 );
+        }
+
+        if ( this._activeSet.length ) {
+            try {
+                this._generate( callback );
+            } catch ( e ) {
+                if ( e instanceof RangeError ) {
+                    let context = this;
+                    _.defer( function() {
+                        context._generate( callback );
+                    } );
+                } else {
+                    throw e;
+                }
+            }
+        } else {
+            callback();
+        }
     }
 }
