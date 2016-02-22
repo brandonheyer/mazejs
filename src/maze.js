@@ -2,22 +2,14 @@ import _ from 'underscore';
 import $ from 'jquery';
 
 export default class {
-    constructor ( $element ) {
-        this.$maze = $element;
-        this.cellSize = 10;
+    constructor () {
         this.distance = 0;
         this.maxDistance = 0;
-
+        this.split = 0;
         this.height = 20;
         this.width = 50;
 
-        this.currTime = new Date();
-        this.drawTime = 0;
-        this.split = 0;
-
         this._activeSet = [];
-
-        this.heats = [];
 
         this.passageToClass = {
             0: 'n',
@@ -121,82 +113,54 @@ export default class {
         return result;
     }
 
-    draw () {
-        var output = '';
+    _generate () {
+        var current, next, neighbors, n;
 
-        for ( let i = 0; i < this.height; i++ ) {
-            for ( let j = 0; j < this.width; j++ ) {
-                output += '<div id="' + j + '-' + i + '" class="cell visited complete ' + this._cells[ i ][ j ].exits.join( ' ' ) +
-                    '" style="width: ' + this.cellSize + 'px; height: ' + this.cellSize + 'px;"></div>';
+        while ( this._activeSet.length ) {
+            n = this._getHeadNode();
+            current = this._activeSet[ n ];
+
+            this.maxDistance = Math.max( this.maxDistance, current.distance );
+
+            neighbors = this._getUnvisitedNeighbors( current );
+
+            if ( neighbors ) {
+                next = neighbors[ Math.floor( Math.random() * neighbors.length ) ];
+
+                next.cell.exits.push( this.inversePassage[ next.direction ] );
+                next.cell.distance = current.distance + 1;
+                next.cell.visited = true;
+
+                this._activeSet.push( next.cell );
+
+                current.exits.push( this.passageToClass[ next.direction ] );
+            } else {
+                this._activeSet.splice( n, 1 );
             }
         }
-
-        this.$maze.append( output ).addClass( 'finished' );
     }
 
-    generate( callback ) {
+    generate( startX, startY ) {
         var current;
-
-        this.$maze
-            .width( this.width * this.cellSize )
-            .height( this.height * this.cellSize )
-            .attr( 'data-width', this.width )
-            .attr( 'data-height', this.height );
 
         this._populateCells();
 
         this.maxDistance = 0;
 
-        current = this._cells[ this._getStartYPos() ][ this._getStartXPos() ];
+        if ( startX === undefined ) {
+            startX = this._getStartXPos();
+        }
+
+        if ( startY === undefined ) {
+            startY = this._getStartYPos();
+        }
+
+        current = this._cells[ startY ][ startX ];
         current.distance = 0;
         current.visited = true;
 
         this._activeSet.push( current );
 
-        this._generate( _.bind( this.draw, this ) );
-    }
-
-    _generate ( callback ) {
-        var current, next, neighbors, n;
-
-        n = this._getHeadNode();
-
-        current = this._activeSet[ n ];
-
-        this.maxDistance = Math.max( this.maxDistance, current.distance );
-
-        neighbors = this._getUnvisitedNeighbors( current );
-
-        if ( neighbors ) {
-            n = Math.floor( Math.random() * neighbors.length );
-            next = neighbors[ n ];
-
-            next.cell.exits.push( this.inversePassage[ next.direction ] );
-            next.cell.distance = current.distance + 1;
-            next.cell.visited = true;
-
-            this._activeSet.push( next.cell );
-
-            current.exits.push( this.passageToClass[ next.direction ] );
-        } else {
-            this._activeSet.splice( n, 1 );
-        }
-
-        if ( this._activeSet.length ) {
-            try {
-                this._generate( callback );
-            } catch ( e ) {
-                if ( e instanceof RangeError ) {
-                    let context = this;
-                    _.defer( function() {
-                        context._generate( callback );
-                    } );
-                } else {
-                    throw e;
-                }
-            }
-        } else {
-            callback();
-        }
+        this._generate();
     }
 }

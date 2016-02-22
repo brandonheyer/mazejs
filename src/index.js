@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import _ from 'underscore';
 import Maze from './maze';
+import Draw from './draw';
 
 var $current, $new, neighbors, direction, n, $maze, maze;
 
@@ -118,7 +119,7 @@ var clearGrid = function() {
 
 $( document ).ready( function() {
     $maze = $( '.maze' );
-    maze = new Maze( $maze );
+    maze = new Maze();
 
     $( '.maze-input' ).hide().first().show();
 
@@ -132,6 +133,7 @@ $( document ).ready( function() {
         maze.split = parseInt( $( '#maze-style' ).val(), 10 );
 
         maze.generate();
+        ( new Draw( $maze, maze ) ).draw();
     } );
 
     $( '#grid-width' ).change( function() {
