@@ -1,31 +1,46 @@
 import _ from 'underscore';
 import $ from 'jquery';
 
-export default class {
-    constructor () {
-        this.distance = 0;
-        this.maxDistance = 0;
-        this.split = 0;
-        this.height = 20;
-        this.width = 50;
+const directions = {
+    LOOKUP: {
+        NORTH: 0,
+        SOUTH: 1,
+        EAST: 2,
+        WEST: 3,
+        UP: 4,
+        DOWN: 5
+    },
 
-        this._activeSet = [];
+    INVERSE_LOOKUP: {
+        0: 1,
+        1: 0,
+        2: 3,
+        3: 2,
+        4: 5,
+        5: 4
+    },
 
-        this.passageToClass = {
-            0: 'n',
-            1: 's',
-            2: 'e',
-            3: 'w'
-        };
-
-        this.inversePassage = {
-            0: 's',
-            1: 'n',
-            2: 'w',
-            3: 'e'
-        };
+    ENCODED: {
+        0: 'n',
+        1: 's',
+        2: 'e',
+        3: 'w',
+        4: 'u',
+        5: 'd'
     }
+};
 
+export { directions };
+
+/**
+ * A maze generation class that will generate a maze of height by width cells
+ */
+export default class {
+    /**
+     * Initialize the two dimensional array containing cell definitions
+     *
+     * @private
+     */
     _populateCells () {
         this._cells = [];
 
@@ -37,6 +52,14 @@ export default class {
                     x: j,
                     y: i,
                     exits: [],
+                    linkedCells: [
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined
+                    ],
                     distance: -1,
                     visited: false,
                     complete: false
@@ -45,10 +68,18 @@ export default class {
         }
     }
 
+    /**
+     * Get the starting x position, a random number between 0 and maze width
+     *
+     * @private
+     */
     _getStartXPos () {
         return Math.floor( Math.random() * this.width );
     }
 
+    /**
+     * Get the starting y position, a random number between 0 and maze height
+     */
     _getStartYPos () {
         return Math.floor( Math.random() * this.height );
     }
@@ -56,6 +87,9 @@ export default class {
     /**
      * Get node to act as head node for generation, will either select a node at
      * random, or the last added node
+     *
+     * @private
+     * @return  {Number}    the index of the new head node to use
      */
     _getHeadNode () {
         // Get a random number between 0 - 99
@@ -76,35 +110,68 @@ export default class {
         return n;
     }
 
-    _storeUnvisitedCell( current, result, direction ) {
-        if ( !current.visited ) {
-            result.push( { cell: current, direction: direction } );
+    /**
+     * Store the unvisted cell in the result array
+     *
+     * @private
+     * @param  {Object} cell      - the cell to store
+     * @param  {Array}  result    - the array of stored, unvisted cells
+     * @param  {Number} direction - the direction of the unvisted cell
+     */
+    _storeUnvisitedCell( cell, result, direction ) {
+        if ( !cell.visited ) {
+            result.push( { cell: cell, direction: direction } );
         }
     }
 
+    /**
+     * Locate and store unvisted cells connected to the current cell
+     *
+     * @private
+     * @param  {Object} cell    - the cell to locate neighbors of
+     * @return {Array|boolean}  An array of unvisted cells, or false if there
+     *                          are no unvisited cells
+     */
     _getUnvisitedNeighbors ( cell ) {
         var result = [];
 
         // North
         if ( cell.y !== 0 ) {
-            this._storeUnvisitedCell( this._cells[ cell.y - 1 ][ cell.x ], result, 0 );
+            this._storeUnvisitedCell(
+                this._cells[ cell.y - 1 ][ cell.x ],
+                result,
+                directions.LOOKUP.NORTH
+            );
         }
 
         // West
         if ( cell.x !== 0 ) {
-            this._storeUnvisitedCell( this._cells[ cell.y ][ cell.x - 1 ], result, 3 );
+            this._storeUnvisitedCell(
+                this._cells[ cell.y ][ cell.x - 1 ],
+                result,
+                directions.LOOKUP.WEST
+            );
         }
 
         // South
         if ( cell.y !== this.height - 1 ) {
-            this._storeUnvisitedCell( this._cells[ cell.y + 1 ][ cell.x ], result, 1 );
+            this._storeUnvisitedCell(
+                this._cells[ cell.y + 1 ][ cell.x ],
+                result,
+                directions.LOOKUP.SOUTH
+            );
         }
 
         // East
         if ( cell.x !== this.width - 1 ) {
-            this._storeUnvisitedCell( this._cells[ cell.y ][ cell.x + 1 ], result, 2 );
+            this._storeUnvisitedCell(
+                this._cells[ cell.y ][ cell.x + 1 ],
+                result,
+                directions.LOOKUP.EAST
+            );
         }
 
+        // No unvisited cells
         if ( result.length === 0 ) {
             cell.complete = true;
             return false;
@@ -113,39 +180,101 @@ export default class {
         return result;
     }
 
+    /**
+     * Generate the maze
+     *
+     * @private
+     */
     _generate () {
         var current, next, neighbors, n;
 
+        // While there are cells that are still "active"
         while ( this._activeSet.length ) {
             n = this._getHeadNode();
             current = this._activeSet[ n ];
 
-            this.maxDistance = Math.max( this.maxDistance, current.distance );
+            // If this cell is the furthest, or tied for the furthest,
+            // from start, store it
+            if ( this._maxDistance <= current.distance ) {
+
+                // Store the new furthest distance
+                this._maxDistance = current.distance;
+
+                // If we already had a cell found at this distance, just
+                // push it onto furthestCells
+                if ( this._maxDistance === current.distance ) {
+                    this._furthestCells.push( current );
+                }
+
+                // Otherwise we create a new array with this cell
+                else {
+                    this._furthestCells = [ current ];
+                }
+            }
 
             neighbors = this._getUnvisitedNeighbors( current );
 
+            // If there are unvisited neighbors, select one to create a link to
+            // from this cell
             if ( neighbors ) {
+
+                // Pick one neighbor at random
+                //
+                // TODO: This would be a good spot to modify the algorithm
+                // to allow for directional wandering, ie: favoring east/west
+                // movement to north/south
                 next = neighbors[ Math.floor( Math.random() * neighbors.length ) ];
 
-                next.cell.exits.push( this.inversePassage[ next.direction ] );
+                // Update the current cell to have an exit to the neighbor
+                current.exits.push(
+                    directions.ENCODED[ next.direction ]
+                );
+                current.linkedCells[ next.direction ] = next;
+
+                // Update the neighbor cell to have an exit to this cell
+                next.cell.exits.push(
+                    directions.ENCODED[ directions.INVERSE_LOOKUP[ next.direction ] ]
+                );
+                next.cell.linkedCells[ directions.INVERSE_LOOKUP[ next.direction ]  ] = current;
+
+                // Store the distance of this cell from the starting cell
+                // This is just a statistic and doesn't current have an
+                // impact on the evaluation of the algorithm
                 next.cell.distance = current.distance + 1;
+
+                // Track that this cell has been visited, that is, it is
+                // accessible from another cell in the maze
                 next.cell.visited = true;
 
+                // Push this cell onto the array of cells that are potential
+                // new head nodes to continue generating the maze from
                 this._activeSet.push( next.cell );
-
-                current.exits.push( this.passageToClass[ next.direction ] );
             } else {
                 this._activeSet.splice( n, 1 );
             }
         }
     }
 
+    constructor ( options = {} ) {
+        this.split = options.split || 0;
+        this.height = options.height || 20;
+        this.width = options.width || 50;
+    }
+
+    /**
+     * Generate the maze from the provided starting x,y position
+     *
+     * @param  {Number} startX  - the x position of the starting cell
+     * @param  {Number} startY  - the y position of the starting cell
+     */
     generate( startX, startY ) {
         var current;
 
         this._populateCells();
 
-        this.maxDistance = 0;
+        this._maxDistance = 0;
+        this._furthestCells = [];
+        this._activeSet = [];
 
         if ( startX === undefined ) {
             startX = this._getStartXPos();
@@ -155,12 +284,24 @@ export default class {
             startY = this._getStartYPos();
         }
 
-        current = this._cells[ startY ][ startX ];
+        this._startingCell = current = this._cells[ startY ][ startX ];
         current.distance = 0;
         current.visited = true;
 
         this._activeSet.push( current );
 
         this._generate();
+    }
+
+    get furthestCells () {
+        return this._furthestCells;
+    }
+
+    get startingCell () {
+        return this._startingCell;
+    }
+
+    get cells () {
+        return this._cells;
     }
 }

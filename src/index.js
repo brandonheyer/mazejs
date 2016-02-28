@@ -114,7 +114,6 @@ var loadDraw = function( saveString, startID, finishIDs ) {
 
 var clearGrid = function() {
     $maze.empty().removeClass( 'finished' );
-    maze.cells = [];
 };
 
 $( document ).ready( function() {
