@@ -256,19 +256,31 @@ export default class {
     }
 
     constructor ( options = {} ) {
-        this.split = options.split || 0;
-        this.height = options.height || 20;
-        this.width = options.width || 50;
+        this.saveOptions( options );
+    }
+
+    /**
+     * Save options for this generator
+     *
+     * @param  {Object} options - a Generator options object
+     */
+    saveOptions ( options = {} ) {
+        this.split = options.split || this.split || 0;
+        this.height = options.height || this.height || 20;
+        this.width = options.width || this.width || 50;
+        this.startX = options.startX || this.startX || this._getStartXPos();
+        this.startY = options.startY || this.startY || this._getStartYPos();
     }
 
     /**
      * Generate the maze from the provided starting x,y position
      *
-     * @param  {Number} startX  - the x position of the starting cell
-     * @param  {Number} startY  - the y position of the starting cell
+     * @param  {Object} options - a Generator options object
      */
-    generate( startX, startY ) {
+    generate ( options = {} ) {
         var current;
+
+        this.saveOptions( options );
 
         this._populateCells();
 
@@ -276,21 +288,17 @@ export default class {
         this._furthestCells = [];
         this._activeSet = [];
 
-        if ( startX === undefined ) {
-            startX = this._getStartXPos();
-        }
-
-        if ( startY === undefined ) {
-            startY = this._getStartYPos();
-        }
-
-        this._startingCell = current = this._cells[ startY ][ startX ];
+        this._startingCell = current = this._cells[ this.startY ][ this.startX ];
         current.distance = 0;
         current.visited = true;
 
         this._activeSet.push( current );
 
         this._generate();
+    }
+
+    getCell ( x, y ) {
+        return this._cells[ y ][ x ];
     }
 
     get furthestCells () {
