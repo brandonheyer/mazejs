@@ -1,17 +1,21 @@
 {
   "name": "labyrinth",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A JavaScript Maze Generator",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "file": "src/labyrinth.js",
+  "main": "src/labyrinth.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/brandonheyer/mazejs.git"
   },
-  "author": "Brandon Heyer",
+  "author": {
+    "name": "Brandon Heyer",
+    "email": "brandonheyer@gmail.com",
+    "url": "http://www.brandonheyer.com"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/brandonheyer/mazejs/issues"

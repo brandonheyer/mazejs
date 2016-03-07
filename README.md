@@ -14,6 +14,12 @@ __AN ES6 JavaScript Maze Generation, Traversal and Rendering Library__
 npm install labyrinth
 ```
 
+# About
+This maze generator and the accompanying algorithm was inspired by a slide show by Jamis Buck called
+["Algorithm is Not a Four Letter Word"](a href="http://www.jamisbuck.org/presentations/rubyconf2011/index.html).
+It is a great read that goes over what mazes are, various ways of generating mazes and the importance of working with algorithms. You can learn more about what I learned while making this generator and algorithm over at this blog post:
+["Maze Generating Algorithms: Fun with HTML and JavaScript"](http://www.brandonheyer.com/2013/04/24/maze-generating-algorithms-fun-with-html-and-javascript).
+
 # Usage
 
 ## Generator
@@ -27,6 +33,17 @@ var generator = new Generator();
 
 generator.generate();
 ```
+
+#### Options
+These are the current options that can be passed to either the `generate()` method
+or upon construction of the generator:
+
+* `split` - a number from 0 - 100, defaulting to 50. This represents the style of the maze.
+0 means a lot of long wondering corridors, and 100 means a lot of short dead ends.
+* `height` - Defaults to 20. The number of cells tall the maze is.
+* `width` - Defaults to 50. The number of cells wide the maze is.
+* `startX` - Defaults to a random value. The starting cell's x position.
+* `startY` - Defaults to a random value. The starting cell's y position.
 
 ## Traverser
 Import the traverser and instantiate it with an instance of a generator. Call
