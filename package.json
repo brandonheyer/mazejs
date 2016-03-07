@@ -1,7 +1,13 @@
 {
   "name": "labyrinth",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A JavaScript Maze Generator",
+  "keywords": [
+      "algorithm",
+      "es6",
+      "maze",
+      "babel"
+  ],
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
