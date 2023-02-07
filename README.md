@@ -16,7 +16,7 @@ npm install labyrinth
 
 # About
 This maze generator and the accompanying algorithm was inspired by a slide show by Jamis Buck called
-["Algorithm is Not a Four Letter Word"](a href="http://www.jamisbuck.org/presentations/rubyconf2011/index.html).
+["Algorithm is Not a Four Letter Word"](http://www.jamisbuck.org/presentations/rubyconf2011/index.html).
 It is a great read that goes over what mazes are, various ways of generating mazes and the importance of working with algorithms. You can learn more about what I learned while making this generator and algorithm over at this blog post:
 ["Maze Generating Algorithms: Fun with HTML and JavaScript"](http://www.brandonheyer.com/2013/04/24/maze-generating-algorithms-fun-with-html-and-javascript).
 
